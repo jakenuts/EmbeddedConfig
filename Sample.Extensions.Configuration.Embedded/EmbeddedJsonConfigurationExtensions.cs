@@ -5,18 +5,21 @@ using Microsoft.Extensions.Configuration.Json;
 namespace Sample.Extensions.Configuration.Embedded;
 
 /// <summary>
-///     The embedded json configuration extensions class
+///     Provides extension methods for working with embedded JSON configuration files in .NET applications.
+///     These methods allow for loading JSON files embedded as resources in assemblies and controlling their
+///     precedence in the configuration system.
 /// </summary>
 public static class EmbeddedJsonConfigurationExtensions
 {
     /// <summary>
-    ///     Adds the embedded json file using the specified builder
+    ///     Adds an embedded JSON file as a configuration source. If a source with the same assembly and resource name
+    ///     already exists, it will not be added again.
     /// </summary>
-    /// <param name="builder">The builder</param>
-    /// <param name="assembly">The assembly</param>
-    /// <param name="resourceName">The resource name</param>
-    /// <param name="optional">The optional</param>
-    /// <returns>The builder</returns>
+    /// <param name="builder">The configuration builder</param>
+    /// <param name="assembly">The assembly containing the embedded resource</param>
+    /// <param name="resourceName">The name of the embedded resource</param>
+    /// <param name="optional">Whether the file is optional (if true, no exception is thrown if the file is not found)</param>
+    /// <returns>The configuration builder for chaining</returns>
     public static IConfigurationBuilder AddEmbeddedJsonFile(this IConfigurationBuilder builder,
                                                             Assembly assembly,
                                                             string resourceName,
@@ -33,14 +36,16 @@ public static class EmbeddedJsonConfigurationExtensions
     }
 
     /// <summary>
-    ///     Adds the embedded json file at index using the specified builder
+    ///     Adds an embedded JSON file as a configuration source at a specific index in the configuration sources.
+    ///     If the source already exists, it will be moved to the specified index.
+    ///     This is key for controlling configuration precedence.
     /// </summary>
-    /// <param name="builder">The builder</param>
-    /// <param name="assembly">The assembly</param>
-    /// <param name="resourceName">The resource name</param>
-    /// <param name="index">The index</param>
-    /// <param name="optional">The optional</param>
-    /// <returns>The builder</returns>
+    /// <param name="builder">The configuration builder</param>
+    /// <param name="assembly">The assembly containing the embedded resource</param>
+    /// <param name="resourceName">The name of the embedded resource</param>
+    /// <param name="index">The index at which to insert the configuration source</param>
+    /// <param name="optional">Whether the file is optional (if true, no exception is thrown if the file is not found)</param>
+    /// <returns>The configuration builder for chaining</returns>
     public static IConfigurationBuilder AddEmbeddedJsonFileAtIndex(this IConfigurationBuilder builder,
                                                                    Assembly assembly,
                                                                    string resourceName,
@@ -62,12 +67,12 @@ public static class EmbeddedJsonConfigurationExtensions
     }
 
     /// <summary>
-    ///     Returns the index of a matching embedded json source or null if none is found
+    ///     Finds the index of an embedded JSON configuration source with the specified assembly and resource name.
     /// </summary>
-    /// <param name="builder"></param>
-    /// <param name="assembly"></param>
-    /// <param name="resourceName"></param>
-    /// <returns></returns>
+    /// <param name="builder">The configuration builder</param>
+    /// <param name="assembly">The assembly containing the embedded resource</param>
+    /// <param name="resourceName">The name of the embedded resource</param>
+    /// <returns>The index of the found source, or null if no matching source is found</returns>
     public static int? FindEmbeddedJsonSource(this IConfigurationBuilder builder, Assembly assembly, string resourceName)
     {
         for (var index = 0; index < builder.Sources.Count; index++)
@@ -84,11 +89,12 @@ public static class EmbeddedJsonConfigurationExtensions
     }
 
     /// <summary>
-    ///     Returns the index of a matching embedded json source or null if none is found
+    ///     Finds the index of a standard JSON configuration source (like appsettings.json) in the builder's sources.
+    ///     If environmentName is provided, it looks for environment-specific files (like appsettings.Development.json).
     /// </summary>
-    /// <param name="builder"></param>
-    /// <param name="environmentName">The optional environment name to search for</param>
-    /// <returns></returns>
+    /// <param name="builder">The configuration builder</param>
+    /// <param name="environmentName">The optional environment name to search for (e.g., "Development", "Production")</param>
+    /// <returns>The index of the found source, or null if no matching source is found</returns>
     public static int? FindStandardJsonSource(this IConfigurationBuilder builder, string? environmentName = null)
     {
         for (var index = 0; index < builder.Sources.Count; index++)
@@ -108,23 +114,24 @@ public static class EmbeddedJsonConfigurationExtensions
     }
 
     /// <summary>
-    ///     Returns true if the specified builder contains an equal embedded source (same assembly and resource name)
+    ///     Checks if the configuration builder already contains an embedded source with the same assembly and resource name.
     /// </summary>
-    /// <param name="builder"></param>
-    /// <param name="source"></param>
-    /// <returns></returns>
+    /// <param name="builder">The configuration builder</param>
+    /// <param name="source">The embedded JSON configuration source to check for</param>
+    /// <returns>True if a matching source exists, false otherwise</returns>
     public static bool HasEmbeddedSource(this IConfigurationBuilder builder, EmbeddedJsonConfigurationSource source) => builder.Sources
         .OfType<EmbeddedJsonConfigurationSource>()
         .Any(source.IsEqual);
 
     /// <summary>
-    ///     Moves an item at one index to a new index without otherwise modifying the list.
+    ///     Moves an item from one position to another in a list without modifying any other items.
+    ///     This is used to reorder configuration sources to control precedence.
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="list"></param>
-    /// <param name="oldIndex"></param>
-    /// <param name="newIndex"></param>
-    /// <exception cref="ArgumentOutOfRangeException"></exception>
+    /// <typeparam name="T">The type of items in the list</typeparam>
+    /// <param name="list">The list to modify</param>
+    /// <param name="oldIndex">The current index of the item to move</param>
+    /// <param name="newIndex">The target index where the item should be moved to</param>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown if either index is out of the valid range for the list</exception>
     public static void ShiftItem<T>(this IList<T> list, int oldIndex, int newIndex)
     {
         // Validate indices
